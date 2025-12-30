@@ -64,8 +64,10 @@ EOF
     "--with-gnutls"
     "--without-libnl"  # Disable netlink support to avoid libnl dependency
     "--disable-manpages"
-    "LEX=flex -L"       # Suppress flex #line directives
-    "YACC=bison -d --no-lines"  # Suppress bison #line directives
+    "LEX=flex"          # Flex executable
+    "YACC=bison"        # Bison executable
+    "LFLAGS=-L"         # Suppress flex #line directives
+    "YFLAGS=--no-lines"  # Suppress bison #line directives
   ];
 
   # Force HAVE_LINUX_VM_SOCKETS_H to be defined since the header exists but configure doesn't find it
