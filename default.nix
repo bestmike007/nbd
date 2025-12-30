@@ -21,8 +21,9 @@ pkgs.stdenv.mkDerivation rec {
   buildInputs = with pkgs; [
     glib
     gnutls
-    libnl
     linuxHeaders
+    # Note: libnl is intentionally omitted to avoid "no version information available" warnings
+    # This disables netlink support, but the legacy ioctl interface still works
   ];
 
   # Ensure version is set correctly without git
@@ -57,7 +58,7 @@ EOF
   configureFlags = [
     "--enable-syslog"
     "--with-gnutls"
-    "--with-libnl"
+    "--without-libnl"  # Disable netlink support to avoid libnl dependency
     "--disable-manpages"
   ];
 
