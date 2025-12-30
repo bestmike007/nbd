@@ -1853,7 +1853,9 @@ int set_peername(int net, CLIENT *client) {
 	if(netaddr.ss_family == AF_UNIX) {
 		client->clientaddr.ss_family = AF_UNIX;
 		strcpy(peername, "unix");
-	} else if(netaddr.ss_family == AF_VSOCK) {
+	}
+#ifdef HAVE_LINUX_VM_SOCKETS_H
+	else if(netaddr.ss_family == AF_VSOCK) {
 		struct sockaddr_vm *svm;
 		addrinlen = sizeof(struct sockaddr_storage);  /* Reset for getpeername */
 		if (getpeername(net, (struct sockaddr *) &(client->clientaddr), &addrinlen) < 0) {
@@ -1863,7 +1865,9 @@ int set_peername(int net, CLIENT *client) {
 		svm = (struct sockaddr_vm *)&(client->clientaddr);
 		snprintf(peername, sizeof(peername), "vsock:%u:%u", svm->svm_cid, svm->svm_port);
 		msg(LOG_INFO, "VSOCK connection from CID %u port %u", svm->svm_cid, svm->svm_port);
-	} else {
+	}
+#endif
+	else {
 		if (getpeername(net, (struct sockaddr *) &(client->clientaddr), &addrinlen) < 0) {
 			msg(LOG_INFO, "getpeername failed: %m");
 			return -1;
@@ -1912,9 +1916,13 @@ int set_peername(int net, CLIENT *client) {
 			int addrbits;
 			if(client->clientaddr.ss_family == AF_UNIX) {
 				tmp = g_strdup(peername);
-			} else if(client->clientaddr.ss_family == AF_VSOCK) {
+			}
+#ifdef HAVE_LINUX_VM_SOCKETS_H
+			else if(client->clientaddr.ss_family == AF_VSOCK) {
 				tmp = g_strdup(peername);
-			} else {
+			}
+#endif
+			else {
 				assert((ai->ai_family == AF_INET) || (ai->ai_family == AF_INET6));
 				if(ai->ai_family == AF_INET) {
 					addrbits = 32;

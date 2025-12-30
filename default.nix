@@ -1,4 +1,8 @@
-{ pkgs ? import <nixpkgs> {} }:
+# Use NixOS 23.05 for glibc 2.37 compatibility with Debian 12+ and Ubuntu 22.04+
+{ pkgs ? import (fetchTarball {
+    url = "https://github.com/NixOS/nixpkgs/archive/nixos-23.05.tar.gz";
+    sha256 = "05cbl1k193c9la9xhlz4y6y8ijpb2mkaqrab30zij6z4kqgclsrd";
+  }) {} }:
 
 pkgs.stdenv.mkDerivation rec {
   pname = "nbd";
@@ -18,10 +22,12 @@ pkgs.stdenv.mkDerivation rec {
     glib
     gnutls
     libnl
+    linuxHeaders
   ];
 
   # Ensure version is set correctly without git
-  preConfigure = ''
+  # We need to set VERSION before autoreconf runs
+  postPatch = ''
     # Create a static version file since git won't be available in the sandbox
     echo "${version}" > support/VERSION
 
@@ -39,6 +45,13 @@ fi
 echo $GITDESC
 EOF
     chmod +x support/genver.sh
+  '';
+
+  # Force HAVE_LINUX_VM_SOCKETS_H to be defined since the header exists but configure doesn't find it
+  postConfigure = ''
+    echo "=== Forcing HAVE_LINUX_VM_SOCKETS_H definition ==="
+    sed -i 's|/\* #undef HAVE_LINUX_VM_SOCKETS_H \*/|#define HAVE_LINUX_VM_SOCKETS_H 1|g' config.h
+    grep HAVE_LINUX_VM_SOCKETS_H config.h
   '';
 
   configureFlags = [

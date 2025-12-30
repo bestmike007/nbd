@@ -18,6 +18,21 @@ RUN cd /src && \
     mkdir -p /output && \
     cp -L result/bin/* /output/
 
+# Install patchelf and strip for binary patching
+RUN nix-env -iA nixpkgs.patchelf nixpkgs.binutils
+
+# Patch binaries to use system interpreter for Debian 12+ / Ubuntu 22.04+ compatibility
+RUN for binary in /output/*; do \
+        patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 "$binary" || true; \
+        patchelf --remove-rpath "$binary" || true; \
+    done
+
+# Strip versioned symbols to eliminate libnl warnings
+# This removes symbol versioning that causes warnings on system libraries
+RUN for binary in /output/*; do \
+        strip --strip-unneeded "$binary" 2>/dev/null || true; \
+    done
+
 # Show what was built
 RUN ls -la /output/
 

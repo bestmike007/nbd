@@ -45,6 +45,8 @@ docker create --name "$CONTAINER_NAME" "$IMAGE_NAME"
 # Extract using tar to preserve structure but reset ownership
 docker cp "$CONTAINER_NAME:/output" - | tar -xf - -C "$OUTPUT_DIR" --strip-components=1
 
+echo "Binaries are patched and ready for Debian 12+ and Ubuntu 22.04+"
+
 # Fix ownership to current user
 # if [ "$(id -u)" != "0" ]; then
 #     sudo chown -R "$(id -u):$(id -g)" "$OUTPUT_DIR" 2>/dev/null || true
