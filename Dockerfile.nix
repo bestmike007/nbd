@@ -30,7 +30,7 @@ RUN for binary in /output/*; do \
 # Strip versioned symbols to eliminate libnl warnings
 # This removes symbol versioning that causes warnings on system libraries
 RUN for binary in /output/*; do \
-        strip --strip-unneeded "$binary" 2>/dev/null || true; \
+        strip --strip-all "$binary" 2>/dev/null || true; \
     done
 
 # Show what was built
