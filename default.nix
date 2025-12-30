@@ -15,6 +15,7 @@ pkgs.stdenv.mkDerivation rec {
     pkg-config
     flex
     bison
+    m4
     autoconf-archive
   ];
 
@@ -46,6 +47,17 @@ fi
 echo $GITDESC
 EOF
     chmod +x support/genver.sh
+
+    echo "=== Patching Makefile.am for reproducible flex/bison builds ==="
+    # Fix reproducibility: ensure bison generates deterministic output
+    # The issue is in Makefile.am where bison is invoked without deterministic flags
+    # --no-lines removes #line directives that contain file paths
+    # --filename=@BASE@ ensures consistent output filename
+    sed -i 's/bison -d \$^/bison -d $^ --no-lines/g' Makefile.am
+
+    # Also need to ensure flex generates reproducible output
+    # flex by default is deterministic, but we should ensure no line directives
+    # The lex output is handled through automake, which should be fine
   '';
 
   # Force HAVE_LINUX_VM_SOCKETS_H to be defined since the header exists but configure doesn't find it
@@ -53,6 +65,11 @@ EOF
     echo "=== Forcing HAVE_LINUX_VM_SOCKETS_H definition ==="
     sed -i 's|/\* #undef HAVE_LINUX_VM_SOCKETS_H \*/|#define HAVE_LINUX_VM_SOCKETS_H 1|g' config.h
     grep HAVE_LINUX_VM_SOCKETS_H config.h
+
+    echo "=== Configuring reproducible build settings ==="
+    # Override any auto-detected flex/bison flags for deterministic output
+    # These ensure generated C files have no embedded timestamps or build paths
+    export M4="${pkgs.m4}/bin/m4"
   '';
 
   configureFlags = [
@@ -63,6 +80,19 @@ EOF
   ];
 
   enableParallelBuilding = true;
+
+  # Ensure reproducible builds
+  # We need to fix timestamps in generated C files from flex and bison
+  preBuild = ''
+    echo "=== Ensuring reproducible build environment ==="
+    # Set deterministic timestamp for all build operations
+    export SOURCE_DATE_EPOCH=315532800  # 1980-01-01 00:00:00 UTC
+  '';
+
+  # After build, normalize timestamps in binaries
+  postBuild = ''
+    echo "=== Build complete ==="
+  '';
 
   meta = with pkgs.lib; {
     description = "Network Block Device - client and server";

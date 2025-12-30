@@ -48,7 +48,7 @@ BUILT_SOURCES = nbdtab_parser.tab.h
 
 nbd-client.c: $(builddir)/nbdtab_parser.tab.h
 nbdtab_parser.tab.h: $(srcdir)/nbdtab_parser.y
-	bison -d $^ > $@
+	bison -d $^ --no-lines > $@
 
 AM_DISTCHECK_CONFIGURE_FLAGS=--enable-syslog
 
