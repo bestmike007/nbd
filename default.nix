@@ -68,7 +68,15 @@ EOF
     "YACC=bison"        # Bison executable
     "LFLAGS=-L"         # Suppress flex #line directives
     "YFLAGS=--no-lines"  # Suppress bison #line directives
+    "--sysconfdir=/etc"  # Use /etc instead of /nix/store/... for reproducibility
+    "--localstatedir=/var"  # Use /var instead of /nix/store/...
   ];
+
+  # Additional CFLAGS to override embedded paths
+  env = {
+    SYSCONFDIR = "/etc";
+    LOCALSTATEDIR = "/var";
+  };
 
   # Force HAVE_LINUX_VM_SOCKETS_H to be defined since the header exists but configure doesn't find it
   postConfigure = ''
