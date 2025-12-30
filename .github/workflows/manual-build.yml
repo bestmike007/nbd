@@ -61,7 +61,9 @@ jobs:
 
           # Configure with deterministic flags
           # Set LEX and YACC to ensure deterministic flex/bison output
-          ./configure --enable-syslog LEX="flex" YACC="bison -d --no-lines"
+          # flex -L suppresses #line directives
+          # bison --no-lines suppresses #line directives
+          ./configure --enable-syslog LEX="flex -L" YACC="bison -d --no-lines"
 
           make -j$(nproc)
 

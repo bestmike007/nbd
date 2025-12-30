@@ -52,13 +52,21 @@ EOF
     # Fix reproducibility: ensure bison generates deterministic output
     # The issue is in Makefile.am where bison is invoked without deterministic flags
     # --no-lines removes #line directives that contain file paths
-    # --filename=@BASE@ ensures consistent output filename
     sed -i 's/bison -d \$^/bison -d $^ --no-lines/g' Makefile.am
 
-    # Also need to ensure flex generates reproducible output
-    # flex by default is deterministic, but we should ensure no line directives
-    # The lex output is handled through automake, which should be fine
+    # Also ensure flex is configured for reproducible output
+    # We need to pass this through configure since automake handles lex output
   '';
+
+  # Override configure variables to ensure deterministic flex/bison output
+  configureFlags = [
+    "--enable-syslog"
+    "--with-gnutls"
+    "--without-libnl"  # Disable netlink support to avoid libnl dependency
+    "--disable-manpages"
+    "LEX=flex -L"       # Suppress flex #line directives
+    "YACC=bison -d --no-lines"  # Suppress bison #line directives
+  ];
 
   # Force HAVE_LINUX_VM_SOCKETS_H to be defined since the header exists but configure doesn't find it
   postConfigure = ''
@@ -71,13 +79,6 @@ EOF
     # These ensure generated C files have no embedded timestamps or build paths
     export M4="${pkgs.m4}/bin/m4"
   '';
-
-  configureFlags = [
-    "--enable-syslog"
-    "--with-gnutls"
-    "--without-libnl"  # Disable netlink support to avoid libnl dependency
-    "--disable-manpages"
-  ];
 
   enableParallelBuilding = true;
 
